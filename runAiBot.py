@@ -126,8 +126,10 @@ def login_LN() -> None:
     # Find the username and password fields and fill them with user credentials
     driver.get("https://www.linkedin.com/login")
     if username == "username@example.com" and password == "example_password":
-        pyautogui.alert("User did not configure username and password in secrets.py, hence can't login automatically! Please login manually!", "Login Manually","Okay")
-        print_lg("User did not configure username and password in secrets.py, hence can't login automatically! Please login manually!")
+        try:
+            pyautogui.alert("User did not configure username and password in secrets.py, hence can't login automatically! Please login manually!", "Login Manually","Okay")
+        except:
+            print_lg("\n[NOTICE]: User did not configure username and password in secrets.py. Please login manually in the browser window that opens.")
         manual_login_retry(is_logged_in_LN, 2)
         return
     try:
@@ -252,12 +254,25 @@ def apply_filters() -> None:
         show_results_button.click()
 
         global pause_after_filters
-        if pause_after_filters and "Turn off Pause after search" == pyautogui.confirm("These are your configured search results and filter. It is safe to change them while this dialog is open, any changes later could result in errors and skipping this search run.", "Please check your results", ["Turn off Pause after search", "Look's good, Continue"]):
-            pause_after_filters = False
+        if pause_after_filters:
+            msg = "These are your configured search results and filter. It is safe to change them while this dialog is open, any changes later could result in errors and skipping this search run."
+            try:
+                if "Turn off Pause after search" == pyautogui.confirm(msg, "Please check your results", ["Turn off Pause after search", "Look's good, Continue"]):
+                    pause_after_filters = False
+            except:
+                print_lg(f"\n[PAUSE]: {msg}")
+                resp = input("Type 'off' to turn off this pause, or just press Enter to continue: ")
+                if resp.lower() == 'off':
+                    pause_after_filters = False
 
     except Exception as e:
         print_lg("Setting the preferences failed!")
-        pyautogui.confirm(f"Faced error while applying filters. Please make sure correct filters are selected, click on show results and click on any button of this dialog, I know it sucks. Can't turn off Pause after search when error occurs! ERROR: {e}", ["Doesn't look good, but Continue XD", "Look's good, Continue"])
+        msg = f"Faced error while applying filters. Please make sure correct filters are selected, click on show results and click on any button of this dialog, I know it sucks. Can't turn off Pause after search when error occurs! ERROR: {e}"
+        try:
+            pyautogui.confirm(msg, ["Doesn't look good, but Continue XD", "Look's good, Continue"])
+        except:
+            print_lg(f"\n[ACTION REQUIRED]: {msg}")
+            input("Press Enter to continue...")
         # print_lg(e)
 
 
@@ -433,6 +448,10 @@ def upload_resume(modal: WebElement, resume: str) -> tuple[bool, str]:
 # Function to answer common questions for Easy Apply
 def answer_common_questions(label: str, answer: str) -> str:
     if 'sponsorship' in label or 'visa' in label: answer = require_visa
+    elif 'gpa' in label or 'cgpa' in label or 'grades' in label: answer = gpa
+    elif 'dsa' in label or 'data structures' in label or 'algorithms' in label: answer = dsa_rating
+    elif 'current company' in label or 'present employer' in label: answer = recent_employer
+    elif 'currently based' in label or 'current location' in label: answer = current_city if current_city else work_location
     return answer
 
 
@@ -685,6 +704,8 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
             if not prev_answer or overwrite_previous_answers:
                 if 'summary' in label: answer = linkedin_summary
                 elif 'cover' in label: answer = cover_letter
+                elif 'products' in label or 'demos' in label or 'built' in label:
+                    answer = f"Live Project (Mock API Builder): https://mockthisapi.com/\nPortfolio: https://vivek-kumar-portfolio-hito.vercel.app/\nGithub: https://github.com/vivekkumar9919"
                 if answer == "":
                 ##> ------ Yang Li : MARKYangL - Feature ------
                     if use_AI and aiClient:
@@ -811,7 +832,11 @@ def failed_job(job_id: str, job_link: str, resume: str, date_listed, error: str,
             file.close()
     except Exception as e:
         print_lg("Failed to update failed jobs list!", e)
-        pyautogui.alert("Failed to update the excel of failed jobs!\nProbably because of 1 of the following reasons:\n1. The file is currently open or in use by another program\n2. Permission denied to write to the file\n3. Failed to find the file", "Failed Logging")
+        msg = "Failed to update the excel of failed jobs!\nProbably because of 1 of the following reasons:\n1. The file is currently open or in use by another program\n2. Permission denied to write to the file\n3. Failed to find the file"
+        try:
+            pyautogui.alert(msg, "Failed Logging")
+        except:
+            print_lg(f"\n[FAILED LOGGING]: {msg}")
 
 
 def screenshot(driver: WebDriver, job_id: str, failedAt: str) -> str:
@@ -849,7 +874,11 @@ def submitted_jobs(job_id: str, title: str, company: str, work_location: str, wo
         csv_file.close()
     except Exception as e:
         print_lg("Failed to update submitted jobs list!", e)
-        pyautogui.alert("Failed to update the excel of applied jobs!\nProbably because of 1 of the following reasons:\n1. The file is currently open or in use by another program\n2. Permission denied to write to the file\n3. Failed to find the file", "Failed Logging")
+        msg = "Failed to update the excel of applied jobs!\nProbably because of 1 of the following reasons:\n1. The file is currently open or in use by another program\n2. Permission denied to write to the file\n3. Failed to find the file"
+        try:
+            pyautogui.alert(msg, "Failed Logging")
+        except:
+            print_lg(f"\n[FAILED LOGGING]: {msg}")
 
 
 
@@ -1057,7 +1086,12 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                     if next_counter >= 15: 
                                         if pause_at_failed_question:
                                             screenshot(driver, job_id, "Needed manual intervention for failed question")
-                                            pyautogui.alert("Couldn't answer one or more questions.\nPlease click \"Continue\" once done.\nDO NOT CLICK Back, Next or Review button in LinkedIn.\n\n\n\n\nYou can turn off \"Pause at failed question\" setting in config.py", "Help Needed", "Continue")
+                                            msg = "Couldn't answer one or more questions.\nPlease click \"Continue\" once done.\nDO NOT CLICK Back, Next or Review button in LinkedIn.\n\n\n\n\nYou can turn off \"Pause at failed question\" setting in config.py"
+                                            try:
+                                                pyautogui.alert(msg, "Help Needed", "Continue")
+                                            except:
+                                                print_lg(f"\n[HELP NEEDED]: {msg}")
+                                                input("Press Enter once you have manually answered the questions...")
                                             next_counter = 1
                                             continue
                                         if questions_list: print_lg("Stuck for one or some of the following questions...", questions_list)
@@ -1080,7 +1114,16 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                 wait_span_click(driver, "Review", 1, scrollTop=True)
                                 cur_pause_before_submit = pause_before_submit
                                 if errored != "stuck" and cur_pause_before_submit:
-                                    decision = pyautogui.confirm('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py\nTo TEMPORARILY disable pausing, click "Disable Pause"', "Confirm your information",["Disable Pause", "Discard Application", "Submit Application"])
+                                    msg = '1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py\nTo TEMPORARILY disable pausing, click "Disable Pause"'
+                                    decision = "Submit Application"
+                                    try:
+                                        decision = pyautogui.confirm(msg, "Confirm your information",["Disable Pause", "Discard Application", "Submit Application"])
+                                    except:
+                                        print_lg(f"\n[CONFIRMATION]: {msg}")
+                                        resp = input("Type 'discard' to stop, 'disable' to turn off this pause, or press Enter to submit: ")
+                                        if resp.lower() == 'discard': decision = "Discard Application"
+                                        elif resp.lower() == 'disable': decision = "Disable Pause"
+                                        
                                     if decision == "Discard Application": raise Exception("Job application discarded by user!")
                                     pause_before_submit = False if "Disable Pause" == decision else True
                                     # try_xp(modal, ".//span[normalize-space(.)='Review']")
@@ -1088,13 +1131,24 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                 if wait_span_click(driver, "Submit application", 2, scrollTop=True): 
                                     date_applied = datetime.now()
                                     if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
-                                elif errored != "stuck" and cur_pause_before_submit and "Yes" in pyautogui.confirm("You submitted the application, didn't you 😒?", "Failed to find Submit Application!", ["Yes", "No"]):
-                                    date_applied = datetime.now()
-                                    wait_span_click(driver, "Done", 2)
+                                elif errored != "stuck" and cur_pause_before_submit:
+                                    msg = "You submitted the application, didn't you 😒?"
+                                    decision = "No"
+                                    try:
+                                        decision = pyautogui.confirm(msg, "Failed to find Submit Application!", ["Yes", "No"])
+                                    except:
+                                        print_lg(f"\n[FAILED BUTTON]: {msg}")
+                                        decision = input("Did you submit it manually? (y/n): ")
+                                        decision = "Yes" if decision.lower() == 'y' else "No"
+                                    
+                                    if "Yes" in decision:
+                                        date_applied = datetime.now()
+                                        wait_span_click(driver, "Done", 2)
+                                    else:
+                                        print_lg("Since, Submit Application failed, discarding the job application...")
+                                        if errored == "nose": raise Exception("Failed to click Submit application 😑")
                                 else:
                                     print_lg("Since, Submit Application failed, discarding the job application...")
-                                    # if screenshot_name == "Not Available":  screenshot_name = screenshot(driver, job_id, "Failed to click Submit application")
-                                    # else:   screenshot_name = [screenshot_name, screenshot(driver, job_id, "Failed to click Submit application")]
                                     if errored == "nose": raise Exception("Failed to click Submit application 😑")
 
 
@@ -1142,10 +1196,10 @@ def apply_to_jobs(search_terms: list[str]) -> None:
         except Exception as e:
             print_lg("Failed to find Job listings!")
             critical_error_log("In Applier", e)
-            try:
-                print_lg(driver.page_source, pretty=True)
-            except Exception as page_source_error:
-                print_lg(f"Failed to get page source, browser might have crashed. {page_source_error}")
+            # try:
+            #     print_lg(driver.page_source, pretty=True)
+            # except Exception as page_source_error:
+            #     print_lg(f"Failed to get page source, browser might have crashed. {page_source_error}")
             # print_lg(e)
 
         
@@ -1172,7 +1226,10 @@ chatGPT_tab = False
 linkedIn_tab = False
 
 def main() -> None:
-    pyautogui.alert("Please consider sponsoring this project at:\n\nhttps://github.com/sponsors/GodsScion\n\n", "Support the project", "Okay")
+    try:
+        pyautogui.alert("Please consider sponsoring this project at:\n\nhttps://github.com/sponsors/GodsScion\n\n", "Support the project", "Okay")
+    except:
+        print_lg("\n[SUPPORT]: Please consider sponsoring this project at: https://github.com/sponsors/GodsScion\n")
     total_runs = 1
     try:
         global linkedIn_tab, tabs_count, useNewResume, aiClient
@@ -1180,7 +1237,11 @@ def main() -> None:
         validate_config()
         
         if not os.path.exists(default_resume_path):
-            pyautogui.alert(text='Your default resume "{}" is missing! Please update it\'s folder path "default_resume_path" in config.py\n\nOR\n\nAdd a resume with exact name and path (check for spelling mistakes including cases).\n\n\nFor now the bot will continue using your previous upload from LinkedIn!'.format(default_resume_path), title="Missing Resume", button="OK")
+            msg = 'Your default resume "{}" is missing! Please update it\'s folder path "default_resume_path" in config.py\n\nOR\n\nAdd a resume with exact name and path (check for spelling mistakes including cases).\n\n\nFor now the bot will continue using your previous upload from LinkedIn!'.format(default_resume_path)
+            try:
+                pyautogui.alert(text=msg, title="Missing Resume", button="OK")
+            except:
+                print_lg(f"\n[WARNING]: {msg}")
             useNewResume = False
         
         # Login to LinkedIn
@@ -1240,7 +1301,10 @@ def main() -> None:
         print_lg("Browser window closed or session is invalid. Exiting.", e)
     except Exception as e:
         critical_error_log("In Applier Main", e)
-        pyautogui.alert(e,alert_title)
+        try:
+            pyautogui.alert(e,alert_title)
+        except:
+            print_lg(f"\n[{alert_title}]: {e}")
     finally:
         summary = "Total runs: {}\nJobs Easy Applied: {}\nExternal job links collected: {}\nTotal applied or collected: {}\nFailed jobs: {}\nIrrelevant jobs skipped: {}\n".format(total_runs,easy_applied_count,external_jobs_count,easy_applied_count + external_jobs_count,failed_count,skip_count)
         print_lg(summary)
@@ -1273,11 +1337,17 @@ def main() -> None:
             timeSaved += 60
             timeSavedMsg = f"In this run, you saved approx {round(timeSaved/60)} mins ({timeSaved} secs), please consider supporting the project."
         msg = f"{quotes}\n\n\n{timeSavedMsg}\nYou can also get your quote and name shown here, or prioritize your bug reports by supporting the project at:\n\nhttps://github.com/sponsors/GodsScion\n\n\nSummary:\n{summary}\n\n\nBest regards,\nSai Vignesh Golla\nhttps://www.linkedin.com/in/saivigneshgolla/\n\nTop Sponsors:\n{sponsors}"
-        pyautogui.alert(msg, "Exiting..")
+        try:
+            pyautogui.alert(msg, "Exiting..")
+        except:
+            print_lg(f"\n[EXIT SUMMARY]:\n{msg}")
         print_lg(msg,"Closing the browser...")
         if tabs_count >= 10:
             msg = "NOTE: IF YOU HAVE MORE THAN 10 TABS OPENED, PLEASE CLOSE OR BOOKMARK THEM!\n\nOr it's highly likely that application will just open browser and not do anything next time!" 
-            pyautogui.alert(msg,"Info")
+            try:
+                pyautogui.alert(msg,"Info")
+            except:
+                print_lg(f"\n[INFO]: {msg}")
             print_lg("\n"+msg)
         ##> ------ Yang Li : MARKYangL - Feature ------
         if use_AI and aiClient:

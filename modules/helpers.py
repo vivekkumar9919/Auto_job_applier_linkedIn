@@ -172,15 +172,23 @@ def manual_login_retry(is_logged_in: callable, limit: int = 2) -> None:
     '''
     count = 0
     while not is_logged_in():
-        from pyautogui import alert
         print_lg("Seems like you're not logged in!")
         button = "Confirm Login"
         message = 'After you successfully Log In, please click "{}" button below.'.format(button)
         if count > limit:
             button = "Skip Confirmation"
             message = 'If you\'re seeing this message even after you logged in, Click "{}". Seems like auto login confirmation failed!'.format(button)
+        
         count += 1
-        if alert(message, "Login Required", button) and count > limit: return
+        try:
+            from pyautogui import alert
+            alert(message, "Login Required", button)
+        except Exception:
+            print_lg(f"\n[ACTION REQUIRED]: {message}")
+            input(f"Press Enter once you have logged in and are on the LinkedIn Feed...")
+            if count > limit: return
+        
+        if count > limit: return
 
 
 

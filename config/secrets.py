@@ -16,11 +16,16 @@ version:    24.12.3.10.30
 
 
 ###################################################### CONFIGURE YOUR TOOLS HERE ######################################################
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 # Login Credentials for LinkedIn (Optional)
-username = "username@example.com"       # Enter your username in the quotes
-password = "example_password"           # Enter your password in the quotes
+username = os.getenv("LINKEDIN_USERNAME", "username@example.com")       # Enter your username in the quotes
+password = os.getenv("LINKEDIN_PASSWORD", "example_password")           # Enter your password in the quotes
 
 
 ## Artificial Intelligence (Beta Not-Recommended)
@@ -40,7 +45,7 @@ CHECK THE OPENAI API PIRCES AT THEIR WEBSITE (https://openai.com/api/pricing/).
 ##> ------ Yang Li : MARKYangL - Feature ------
 ##> ------ Tim L : tulxoro - Refactor ------
 # Select AI Provider
-ai_provider = "openai"               # "openai", "deepseek", "gemini"
+ai_provider = os.getenv("AI_PROVIDER", "openai")               # "openai", "deepseek", "gemini"
 '''
 Note: Select your AI provider.
 * "openai" - OpenAI API (GPT models) OR OpenAi-compatible APIs (like Ollama)
@@ -58,14 +63,14 @@ Note: Don't forget to add / at the end of your url. You may not need this if you
 '''
 
 # Your LLM API key or other AI API key 
-llm_api_key = "not-needed"              # Enter your API key in the quotes, make sure it's valid, if not will result in error.
+llm_api_key = os.getenv("AI_API_KEY", "not-needed")              # Enter your API key in the quotes, make sure it's valid, if not will result in error.
 '''
 Note: Leave it empty as "" or "not-needed" if not needed. Else will result in error!
 If you are using ollama, you MUST put "not-needed".
 '''
 
 # Your LLM model name or other AI model name
-llm_model = "gpt-5-mini"          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct", "qwen3:latest", "gemini-pro", "gemini-1.5-flash", "gemini-2.5-flash", "deepseek-llm:latest"
+llm_model = os.getenv("AI_MODEL", "gpt-4o")          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct", "qwen3:latest", "gemini-pro", "gemini-1.5-flash", "gemini-2.5-flash", "deepseek-llm:latest"
 
 llm_spec = "openai"                # Examples: "openai", "openai-like", "openai-like-github", "openai-like-mistral"
 '''
